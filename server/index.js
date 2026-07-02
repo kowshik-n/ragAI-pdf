@@ -10,11 +10,34 @@ import OpenAI from 'openai';
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const queue = new Queue('file-upload-queue', {
-  connection: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: Number(process.env.REDIS_PORT || 6379),
-  },
+
+let queue;
+
+async function initializeQueue() {
+  if (queue) return queue;
+  
+  try {
+    queue = new Queue('file-upload-queue', {
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT || 6379),
+        maxRetriesPerRequest: null,
+      },
+    });
+
+    await queue.waitUntilReady();
+    console.log('Queue connected to Redis');
+    return queue;
+  } catch (err) {
+    console.warn('Failed to connect queue:', err.message);
+    queue = null;
+    throw err;
+  }
+}
+
+// Initialize queue on startup (non-blocking)
+initializeQueue().catch(err => {
+  console.warn('Initial queue connection failed, will retry on first upload');
 });
 
 const storage = multer.diskStorage({
@@ -42,7 +65,16 @@ app.post('/upload/pdf', upload.single('pdf'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    await queue.add('file-ready', {
+    // Try to initialize/get queue
+    const q = await initializeQueue();
+    
+    if (!q) {
+      return res.status(503).json({ 
+        error: 'File processing service unavailable - Redis not connected. Please ensure Redis is running.' 
+      });
+    }
+
+    await q.add('file-ready', {
       filename: req.file.originalname,
       destination: req.file.destination,
       path: req.file.path,
