@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
 const FileUploadComponent: React.FC = () => {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);

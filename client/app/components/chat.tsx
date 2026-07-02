@@ -20,7 +20,7 @@ interface IMessage {
   documents?: Doc[];
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
 const getPageNumber = (doc: Doc): string => {
   // Try different possible metadata structures
