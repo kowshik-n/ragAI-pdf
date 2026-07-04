@@ -75,7 +75,4 @@ docker compose -f docker-compose.prod.yml up --build -d
 - Uploaded PDFs are saved in `server/uploads`.
 - Embedding data is stored in the `qdrant_data` Docker volume.
 
-## Next Step
 
-I can help you add HTTPS for your domain or configure deployment for DigitalOcean, AWS, or Azure.
-#
